@@ -1,0 +1,9 @@
+# Ignore compiled executables
+*.exe
+main
+
+*.csv
+*.png
+
+# Ignore VS Code settings
+.vscode/

@@ -1,0 +1,55 @@
+#include "MathTools.h"
+
+#include <cmath>
+
+using namespace std;
+
+double MathTools::L2Norm
+(
+    const vector<double>& res
+)
+{
+    int n = res.size();
+    double l2 = 0;
+    for(int i = 0; i < n; ++i){
+        l2 += res[i] * res[i];
+    }
+
+    l2 = sqrt(l2);
+
+    return l2;
+}
+
+vector<double> MathTools::vectorSub
+(
+    const vector<double>& v1,
+    const vector<double>& v2
+)
+{
+    vector<double> r;
+    int n = v1.size();
+    r.assign(n, 0.0);
+
+    for(int i = 0; i<n; ++i){
+        r[i] = v1[i] - v2[i];
+    }
+
+    return r;
+}
+
+vector<double> MathTools::vectorAdd
+(
+    const vector<double>& v1,
+    const vector<double>& v2
+)
+{
+    vector<double> r;
+    int n = v1.size();
+    r.assign(n, 0.0);
+
+    for(int i = 0; i<n; ++i){
+        r[i] = v1[i] + v2[i];
+    }
+
+    return r;
+}
