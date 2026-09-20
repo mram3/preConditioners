@@ -177,6 +177,54 @@ void sgsPreconditioner::apply
     }
 }
 
+void sgsPreconditioner::applyLower(std::vector<double>& z, const std::vector<double>& r) const 
+{
+    const auto& rowPtr = matPtr->getrowPtr();
+    const auto& col = matPtr->getcol();
+    const auto& values = matPtr->getvalues();
+    int n = r.size();
+
+    // Standard Forward Gauss-Seidel
+    for(int i = 0; i < n; ++i){
+        double sum = 0.0;
+        double diag = 1.0;
+        for(int j = rowPtr[i]; j < rowPtr[i+1]; ++j){
+            if(i > col[j]){
+                sum += values[j] * z[col[j]];
+            }
+            else if(i == col[j]){
+                diag = values[j];
+            }
+        }
+        z[i] = (r[i] - sum) / diag;
+    }
+}
+
+void sgsPreconditioner::applyUpper(std::vector<double>& z, const std::vector<double>& r) const 
+{
+    const auto& rowPtr = matPtr->getrowPtr();
+    const auto& col = matPtr->getcol();
+    const auto& values = matPtr->getvalues();
+    int n = r.size();
+
+    // Backward sweep: Mathematically (D - U)z = D * y
+    // 'r' is the y vector from applyLower.
+    for(int i = n - 1; i >= 0; --i){
+        double sum = 0.0;
+        double diag = 1.0;
+        for(int j = rowPtr[i]; j < rowPtr[i+1]; ++j){
+            if(i < col[j]){
+                sum += values[j] * z[col[j]];
+            }
+            else if(i == col[j]){
+                diag = values[j];
+            }
+        }
+        // Notice the algebra difference here to prevent double-dividing the RHS
+        z[i] = r[i] - (sum / diag); 
+    }
+}
+
 void ilu0Preconditioner::setup
 (
     const Matrix& A
@@ -272,6 +320,46 @@ void ilu0Preconditioner::apply
             }
         }
         z[i] = (z[i]-sum) / diag;
+    }
+}
+
+void ilu0Preconditioner::applyLower(std::vector<double>& z, const std::vector<double>& r) const 
+{
+    const auto& rowPtr = matPtr->getrowPtr();
+    const auto& col = matPtr->getcol();
+    int n = r.size();
+
+    for(int i = 0; i < n; ++i){
+        double sum = 0.0;
+        for(int j = rowPtr[i]; j < rowPtr[i+1]; ++j){
+            if(i > col[j]){
+                sum += luvalues[j] * z[col[j]];
+            }
+        }
+        // L diagonal is implicitly 1.0
+        z[i] = r[i] - sum; 
+    }
+}
+
+void ilu0Preconditioner::applyUpper(std::vector<double>& z, const std::vector<double>& r) const 
+{
+    const auto& rowPtr = matPtr->getrowPtr();
+    const auto& col = matPtr->getcol();
+    int n = r.size();
+
+    // 'r' here is the z_lower vector passed from applyLower
+    for(int i = n - 1; i >= 0; --i){
+        double sum = 0.0;
+        double diag = 1.0;
+        for(int j = rowPtr[i]; j < rowPtr[i+1]; ++j){
+            if(i < col[j]){
+                sum += luvalues[j] * z[col[j]];
+            }
+            else if(i == col[j]){
+                diag = luvalues[j];
+            }
+        }
+        z[i] = (r[i] - sum) / diag;
     }
 }
 
@@ -390,5 +478,47 @@ void ic0Preconditioner::apply
             }
         }
         z[i] = (z[i]-sum) / diag;
+    }
+}
+
+void ic0Preconditioner::applyLower(std::vector<double>& z, const std::vector<double>& r) const 
+{
+    const auto& rowPtr = matPtr->getrowPtr();
+    const auto& col = matPtr->getcol();
+    int n = r.size();
+
+    for(int i = 0; i < n; ++i){
+        double sum = 0.0;
+        double diag = 1.0;
+        for(int j = rowPtr[i]; j < rowPtr[i+1]; ++j){
+            if(i > col[j]){
+                sum += lltvalues[j] * z[col[j]];
+            }
+            else if(i == col[j]){
+                diag = lltvalues[j];
+            }
+        }
+        z[i] = (r[i] - sum) / diag;
+    }
+}
+
+void ic0Preconditioner::applyUpper(std::vector<double>& z, const std::vector<double>& r) const 
+{
+    const auto& rowPtr = matPtr->getrowPtr();
+    const auto& col = matPtr->getcol();
+    int n = r.size();
+
+    for(int i = n - 1; i >= 0; --i){
+        double sum = 0.0;
+        double diag = 1.0;
+        for(int j = rowPtr[i]; j < rowPtr[i+1]; ++j){
+            if(i < col[j]){
+                sum += lltvalues[j] * z[col[j]];
+            }
+            else if(i == col[j]){
+                diag = lltvalues[j];
+            }
+        }
+        z[i] = (r[i] - sum) / diag;
     }
 }

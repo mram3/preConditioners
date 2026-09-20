@@ -18,6 +18,7 @@ int LinearSolvers::richardsonIteration
     int iter = 0;
     double residual = 1.0;
     vector<double> z(b.size(), 0.0);//initializing the M^-1 * (b - Ax) vector 
+    vector<double> z_lower(b.size(), 0.0);
 
     while(iter < max_iter){
 
@@ -25,8 +26,6 @@ int LinearSolvers::richardsonIteration
         vector<double> Ax = A.SpMV(x);
         //b-A*x
         vector<double> r = MathTools::vectorSub(b, Ax);
-
-        residual = MathTools::L2Norm(r);
 
         if(residual < tolrance){
             return iter;
@@ -36,24 +35,39 @@ int LinearSolvers::richardsonIteration
         {
         case Side::Left:
             M.apply(z, r);
+            residual = MathTools::L2Norm(r);
+            x = MathTools::vectorAdd(z, x);
             break;
 
         case Side::Right:
-
+            residual = MathTools::L2Norm(r);
+            M.apply(z, r);
+            x = MathTools::vectorAdd(z, x);
             break;
 
         case Side::Split:
-        
+            
+            // 1. Forward sweep only: L * z_lower = r
+            M.applyLower(z_lower, r); 
+            
+            residual = MathTools::L2Norm(z_lower);
+            
+            // 2. Backward sweep only: U * z = z_lower
+            M.applyUpper(z, z_lower); 
+            
+            x = MathTools::vectorAdd(z, x);
             break;
 
         case Side::None:
-        
+            residual = MathTools::L2Norm(r);
+            x = MathTools::vectorAdd(r, x);
             break;
         }
 
-        //update x
-        x = MathTools::vectorAdd(z, x);
-
+        if(residual < tolrance){
+            return iter;
+        }
+        
         iter++;
     }
 

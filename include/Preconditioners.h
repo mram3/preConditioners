@@ -59,6 +59,8 @@ class sgsPreconditioner : public Preconditioners
 public:
     void setup(const Matrix& A) override;
     void apply(std::vector<double>& z, const std::vector<double>& r)const override;
+    void applyLower(std::vector<double>& z, const std::vector<double>& r) const override;
+    void applyUpper(std::vector<double>& z, const std::vector<double>& r) const override;
 
 private:
     std::vector<double> invDiag;
@@ -70,6 +72,8 @@ class ilu0Preconditioner : public Preconditioners
 public:
     void setup(const Matrix& A) override;
     void apply(std::vector<double>& z, const std::vector<double>& r)const override;
+    void applyLower(std::vector<double>& z, const std::vector<double>& r) const override;
+    void applyUpper(std::vector<double>& z, const std::vector<double>& r) const override;
 
 private:
     std::vector<double> luvalues;
@@ -81,6 +85,8 @@ class ic0Preconditioner : public Preconditioners
 public:
     void setup(const Matrix& A) override;
     void apply(std::vector<double>& z, const std::vector<double>& r)const override;
+    void applyLower(std::vector<double>& z, const std::vector<double>& r) const override;
+    void applyUpper(std::vector<double>& z, const std::vector<double>& r) const override;
 
 private:
     std::vector<double> lltvalues;
