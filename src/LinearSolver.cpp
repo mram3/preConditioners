@@ -1,6 +1,8 @@
 #include "LinearSolvers.h"
 
 #include <iostream>
+#include <cmath>
+#include <vector>
 
 using namespace std;
 
@@ -73,4 +75,125 @@ int LinearSolvers::richardsonIteration
 
     cout << "Does not converge\n";
     return iter;
+}
+
+void LinearSolvers::directCholesky
+(
+    const Matrix& A_sparse,
+    const std::vector<double>& b,
+    std::vector<double>& x
+)
+{
+    int n = b.size();
+    
+    //Unpacking CSR into a Dense Matrix
+    std::vector<std::vector<double>> A(n, std::vector<double>(n, 0.0));
+    const auto& rowPtr = A_sparse.getrowPtr();
+    const auto& col = A_sparse.getcol();
+    const auto& values = A_sparse.getvalues();
+
+    for(int i = 0; i < n; ++i){
+        for(int j = rowPtr[i]; j < rowPtr[i+1]; ++j){
+            A[i][col[j]] = values[j];
+        }
+    }
+
+    //Exact Dense Cholesky Factorization (A = L * L^T)
+    std::vector<std::vector<double>> L(n, std::vector<double>(n, 0.0));
+    
+    for(int i = 0; i < n; ++i){
+        for(int j = 0; j <= i; ++j){
+            double sum = 0.0;
+            
+            // Calculating the dot product of previous elements
+            for(int k = 0; k < j; ++k){
+                sum += L[i][k] * L[j][k];
+            }
+            
+            // Applying exact Cholesky equations
+            if(i == j){
+                L[i][j] = std::sqrt(A[i][i] - sum);
+            } else {
+                L[i][j] = (A[i][j] - sum) / L[j][j];
+            }
+        }
+    }
+
+    //Forward Substitution (L * y = b)
+    std::vector<double> y(n, 0.0);
+    for(int i = 0; i < n; ++i){
+        double sum = 0.0;
+        for(int j = 0; j < i; ++j){
+            sum += L[i][j] * y[j];
+        }
+        y[i] = (b[i] - sum) / L[i][i];
+    }
+
+    //Backward Substitution (L^T * x = y)
+    for(int i = n - 1; i >= 0; --i){
+        double sum = 0.0;
+        for(int j = i + 1; j < n; ++j){
+            sum += L[j][i] * x[j]; 
+        }
+        x[i] = (y[i] - sum) / L[i][i];
+    }
+}
+
+void LinearSolvers::directLU
+(
+    const Matrix& A_sparse,
+    const std::vector<double>& b,
+    std::vector<double>& x
+)
+{
+    int n = b.size();
+
+    std::vector<std::vector<double>> A(n, std::vector<double>(n, 0.0));
+    const auto& rowPtr = A_sparse.getrowPtr();
+    const auto& col = A_sparse.getcol();
+    const auto& values = A_sparse.getvalues();
+
+    for(int i = 0; i < n; ++i){
+        for(int j = rowPtr[i]; j < rowPtr[i+1]; ++j){
+            A[i][col[j]] = values[j];
+        }
+    }
+
+    for(int i = 0; i < n; ++i){
+        
+        for(int j = i; j < n; ++j){
+            double sum = 0.0;
+            for(int k = 0; k < i; ++k){
+                sum += A[i][k] * A[k][j]; // L_ik * U_kj
+            }
+            A[i][j] = A[i][j] - sum;
+        }
+
+        for(int j = i + 1; j < n; ++j){
+            double sum = 0.0;
+            for(int k = 0; k < i; ++k){
+                sum += A[j][k] * A[k][i]; // L_jk * U_ki
+            }
+            A[j][i] = (A[j][i] - sum) / A[i][i]; // Divide by U_ii
+        }
+    }
+
+    //Forward Substitution (L * y = b)
+    std::vector<double> y(n, 0.0);
+    for(int i = 0; i < n; ++i){
+        double sum = 0.0;
+        for(int j = 0; j < i; ++j){
+            sum += A[i][j] * y[j]; // A[i][j] acts as L
+        }
+        y[i] = b[i] - sum;
+    }
+
+    //Backward Substitution (U * x = y)
+    for(int i = n - 1; i >= 0; --i){
+        double sum = 0.0;
+        for(int j = i + 1; j < n; ++j){
+            sum += A[i][j] * x[j]; // A[i][j] acts as U
+        }
+        x[i] = (y[i] - sum) / A[i][i]; // A[i][i] acts as U_ii
+    }
 }

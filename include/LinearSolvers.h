@@ -18,5 +18,20 @@ public:
         double tolerance,
         Side side
     );
+
+    void directCholesky
+    (
+        const Matrix& A_sparse, 
+        const std::vector<double>& b, 
+        std::vector<double>& x
+    );
+
+    void directLU
+    (
+        const Matrix& A_sparse, 
+        const std::vector<double>& b, 
+        std::vector<double>& x
+    );
+
 };
 #endif
