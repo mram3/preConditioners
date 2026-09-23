@@ -3,9 +3,9 @@ Compiling Instruction: g++ main.cpp src/*.cpp -Iinclude -std=c++17 -o main && ./
 */
 #include <iostream>
 #include <vector>
-#include <algorithm> // for std::fill
-#include <chrono>    // for wall-clock timing
-#include <iomanip>   // for formatted terminal output
+#include <algorithm> 
+#include <chrono>  
+#include <iomanip>   
 
 #include "LinearSolvers.h"
 
@@ -13,8 +13,8 @@ using namespace std;
 using namespace std::chrono;
 
 int main(){
-    int Nx = 50; // number of cells along x axis
-    int Ny = 50; // number of cells along y axis
+    int Nx = 10; // number of cells along x axis
+    int Ny = 10; // number of cells along y axis
 
     int NCells = Nx * Ny;
     std::vector<double> x(NCells, 0.0); // initialize the solution vector
@@ -26,26 +26,23 @@ int main(){
     
     jacobiPreconditioner jP; 
     sorPreconditioner gS(1.0);
-    sorPreconditioner sP(1.88);
+    sorPreconditioner sP(1.56);
     sgsPreconditioner sGS;
     ilu0Preconditioner ilu;
     ic0Preconditioner ic;
 
-    // Set up the preconditioners
+    //setting up the preconditioners
     jP.setup(eqn.A);
     gS.setup(eqn.A);
     sP.setup(eqn.A);
     sGS.setup(eqn.A);
     ilu.setup(eqn.A);
     ic.setup(eqn.A);
-    
-    // ... (Setup and Includes remain the same) ...
 
-    // Variables to store timing and errors
     double timeJP, timeGS, timeSP, timeSGS, timeILU, timeIC, timeLU, timeChol;
     double errJP, errGS, errSP, errSGS, errILU, errIC, errChol;
 
-    // --- 1. GET THE EXACT REFERENCE SOLUTION FIRST ---
+    //Getting the exact solution using exact LU
     std::vector<double> x_exact(NCells, 0.0);
     
     auto start = high_resolution_clock::now();
@@ -53,7 +50,7 @@ int main(){
     auto end = high_resolution_clock::now();
     timeLU = duration<double, std::milli>(end - start).count();
 
-    // --- 2. RUN SOLVERS AND CALCULATE ERROR ---
+    //Iterating the preconditioned system
 
     // 1. Jacobi Preconditioner
     std::fill(x.begin(), x.end(), 0.0);
@@ -111,7 +108,7 @@ int main(){
     timeChol = duration<double, std::milli>(end - start).count();
     errChol = MathTools::L2Norm(MathTools::vectorSub(x_exact, x));
 
-    // --- 3. PRINTING RESULTS ---
+    //Printing results
     
     cout << "\n======================================================================================\n";
     cout << left << setw(30) << "Solver / Preconditioner" 
@@ -122,12 +119,12 @@ int main(){
     
     cout << scientific << setprecision(4);
     
-    cout << left << setw(30) << "Jacobi (Right)"      << setw(15) << iterJP  << fixed << setprecision(3) << setw(20) << timeJP << scientific << errJP << endl;
-    cout << left << setw(30) << "Gauss-Seidel (Right)"<< setw(15) << iterGS  << fixed << setw(20) << timeGS << scientific << errGS << endl;
-    cout << left << setw(30) << "SOR w=1.88 (Right)"  << setw(15) << iterSP  << fixed << setw(20) << timeSP << scientific << errSP << endl;
-    cout << left << setw(30) << "Symmetric GS (Split)"<< setw(15) << iterSGS << fixed << setw(20) << timeSGS << scientific << errSGS << endl;
-    cout << left << setw(30) << "ILU(0) (Split)"      << setw(15) << iterILU << fixed << setw(20) << timeILU << scientific << errILU << endl;
-    cout << left << setw(30) << "IC(0) (Split)"       << setw(15) << iterIC  << fixed << setw(20) << timeIC << scientific << errIC << endl;
+    cout << left << setw(30) << "Jacobi (Left)"      << setw(15) << iterJP  << fixed << setprecision(3) << setw(20) << timeJP << scientific << errJP << endl;
+    cout << left << setw(30) << "Gauss-Seidel (Left)"<< setw(15) << iterGS  << fixed << setw(20) << timeGS << scientific << errGS << endl;
+    cout << left << setw(30) << "SOR w=1.56 (Left)"  << setw(15) << iterSP  << fixed << setw(20) << timeSP << scientific << errSP << endl;
+    cout << left << setw(30) << "Symmetric GS (Left)"<< setw(15) << iterSGS << fixed << setw(20) << timeSGS << scientific << errSGS << endl;
+    cout << left << setw(30) << "ILU(0) (Left)"      << setw(15) << iterILU << fixed << setw(20) << timeILU << scientific << errILU << endl;
+    cout << left << setw(30) << "IC(0) (Left)"       << setw(15) << iterIC  << fixed << setw(20) << timeIC << scientific << errIC << endl;
     
     cout << "--------------------------------------------------------------------------------------\n";
     
